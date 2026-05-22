@@ -30,7 +30,8 @@
 
 ## News
 
-- **2026-04-03**: TherA and R2T2 dataset repositories released.
+- **2026-04-03**: TherA github repo opening
+- **2026-04-03**: TherA inference code and R2T2 dataset release.
 
 ---
 
@@ -76,11 +77,11 @@ TherA/
 ├── thera_paths.py              # Default local weight paths
 ├── thera_llava.py              # Lazy LLaVA loader
 └── weights/                    # Download weights here; not tracked by git
-    ├── checkpoint/model.pt
-    ├── merged_models/
+    ├── model.pt                # TherA Model
+    ├── merged_models/          # Initialization model
     │   ├── unet/
     │   └── adapter/
-    ├── stable-diffusion/
+    ├── stable-diffusion/       
     │   ├── vae/
     │   └── scheduler/
     ├── reference_caches/
@@ -88,9 +89,17 @@ TherA/
     │   ├── CLOUDY.pt
     │   ├── RAINY.pt
     │   └── NIGHT.pt
-    └── llava/                  # Optional; only for on-the-fly mode
-        ├── llava-1.5-7b-hf/
-        └── llava-miragehd-lora/
+    ├── reference_caches/
+    │   │   ├── SUNNY.pt
+    │   │   ├── CLOUDY.pt
+    │   │   ├── RAINY.pt
+    │   │   └── NIGHT.pt
+    └── TherA-VLM/                  # Optional; only for on-the-fly mode
+        ├── adaptor_config.json/
+        └── adapter_model.safetensors
+        └── config.json
+        └── non_lora_trainables.bin
+        └── trainer_state.json
 ```
 
 ---
@@ -155,13 +164,13 @@ After downloading, your `weights/` directory should contain:
 
 | Path | Description | Required? |
 |---|---|---|
-| `weights/checkpoint/model.pt` | TherA trained UNet and adapter checkpoint | Yes |
+| `weights/model.pt` | TherA trained UNet and adapter checkpoint | Yes |
 | `weights/merged_models/unet/` | UNet architecture/config files | Yes |
 | `weights/merged_models/adapter/` | TextAdapter architecture/config files | Yes |
 | `weights/stable-diffusion/vae/` | Stable Diffusion VAE | Yes |
 | `weights/stable-diffusion/scheduler/` | DDIM scheduler config | Yes |
 | `weights/reference_caches/*.pt` | Precomputed LLaVA hidden states for inference palettes | Recommended |
-| `weights/llava/` | LLaVA weights for on-the-fly feature extraction | Optional |
+| `weights/TherA-VLM/` | LLaVA weights for on-the-fly feature extraction | Optional |
 
 ---
 
@@ -184,18 +193,38 @@ weights/llava/llava-miragehd-lora/
 
 ## Quick Start
 
-### Batch RGB → TIR Inference
+---
 
-Reference-cache mode is the recommended default. It does not load LLaVA at runtime.
+## Full RGB-TIR translation using TherA-VLM
+
+Use this mode if you want to extract hidden states from TherA directly at runtime from an RGB image and prompt.
 
 ```bash
 python infer_custom.py \
   --rgb-dir examples/rgb \
-  --output-dir preds/sunny \
-  --reference-cache weights/reference_caches/SUNNY.pt
+  --output-dir preds \
+  --llava-base-path weights/llava-1.5-7b-hf \
+  --llava-lora-path weights/TherA-VLM \
+  --llava-prompt "How would this RGB scene appear in long-wave thermal infrared spectrum."
 ```
 
-The script reads all images in `examples/rgb` and writes translated TIR images to `preds/sunny`.
+This mode is more expensive because it loads LLaVA during inference.
+
+
+
+### Reference-Guided Image Translation Mode
+
+This mode extracts LLaVA features from a reference RGB image and applies them to a target RGB image.
+
+```bash
+python infer_example_guided.py \
+  --mode two-image \
+  --reference-image examples/ref/rgb.jpg \
+  --input-image examples/rgb/scene.jpg \
+  --output preds/scene_tir.png \
+  --llava-base-path weights/llava-1.5-7b-hf \
+  --llava-lora-path weights/TherA-VLM
+```
 
 ---
 
@@ -212,14 +241,21 @@ python infer_custom.py \
 When `--recursive` is used, the output folder preserves the input directory structure.
 
 ---
+---
 
-### Run Multiple Weather Palettes
-
-If you have multiple reference caches, you can run palette-based inference:
+## Reference-cache Mode
+Reference-cache mode is the recommended if you are lacking GPU memory. It does not load LLaVA at runtime.
 
 ```bash
-bash scripts/infer_palette.sh examples/rgb preds_palette
+python infer_custom.py \
+  --rgb-dir examples/rgb \
+  --output-dir preds/sunny \
+  --reference-cache weights/reference_caches/SUNNY.pt
 ```
+
+The script reads all images in `examples/rgb` and writes translated TIR images to `preds/sunny`.
+
+A lighter version of the text-guided image translation module. 
 
 Example palette caches:
 
@@ -230,52 +266,7 @@ weights/reference_caches/RAINY.pt
 weights/reference_caches/NIGHT.pt
 ```
 
----
-
-## Single-Image Inference
-
-### Cached Reference Mode
-
-```bash
-python infer_example_guided.py \
-  --mode cached \
-  --reference-cache weights/reference_caches/SUNNY.pt \
-  --input-image examples/rgb/scene.jpg \
-  --output preds/scene_tir.png
-```
-
----
-
-### Two-Image Guided Mode
-
-This mode extracts LLaVA features from a reference RGB image and applies them to a target RGB image.
-
-```bash
-python infer_example_guided.py \
-  --mode two-image \
-  --reference-image examples/ref/rgb.jpg \
-  --input-image examples/rgb/scene.jpg \
-  --output preds/scene_tir.png \
-  --llava-base-path weights/llava/llava-1.5-7b-hf \
-  --llava-lora-path weights/llava/llava-miragehd-lora
-```
-
----
-
-## Optional: On-the-Fly LLaVA Feature Extraction
-
-Use this mode if you want to extract LLaVA hidden states at runtime from an RGB image and prompt.
-
-```bash
-python infer_custom.py \
-  --rgb-dir examples/rgb \
-  --output-dir preds \
-  --llava-base-path weights/llava/llava-1.5-7b-hf \
-  --llava-lora-path weights/llava/llava-miragehd-lora \
-  --llava-prompt "How would this RGB scene appear in long-wave thermal infrared spectrum. The weather is sunny."
-```
-
-This mode is more expensive because it loads LLaVA during inference.
+You can use different pallete cache to achieve different translation effects. 
 
 ---
 
@@ -285,8 +276,8 @@ This mode is more expensive because it loads LLaVA during inference.
 |---|---|---:|---|
 | Reference cache | `--reference-cache path.pt` | No | Default deployment and fast inference |
 | Per-image cache directory | `--cache-dir dir/` | No | Precomputed feature per image |
-| On-the-fly extraction | `--llava-base-path ...` | Yes | Runtime prompt/image conditioning |
-| Two-image guided | `infer_example_guided.py --mode two-image` | Yes | Apply reference-image conditioning |
+| Full RGB-TIR translation| `--llava-base-path ...` | Yes | Runtime prompt/image conditioning |
+| Reference image-guided translation| `infer_example_guided.py --mode two-image` | Yes | Apply reference-image conditioning |
 
 ---
 
@@ -318,7 +309,7 @@ A single reference cache can be applied to all input images as a global thermal/
 | `--cache-dir` | `None` | Folder of per-image `.pt` caches matched by filename stem |
 | `--llava-base-path` | `None` | Base LLaVA model path for on-the-fly mode |
 | `--llava-lora-path` | `None` | Optional LLaVA LoRA path |
-| `--llava-prompt` | thermal prompt | Prompt used for on-the-fly LLaVA extraction |
+| `--llava-prompt` | thermal prompt | Prompt used for default inference/text-guided translation|
 | `--num-steps` | `100` | DDIM sampling steps |
 | `--cfg-text` | `3.5` | Text/VLM guidance strength |
 | `--cfg-image` | `1.5` | Image guidance strength |
@@ -397,12 +388,12 @@ R2T2/
 
 ## Troubleshooting
 
-### `Checkpoint not found: weights/checkpoint/model.pt`
+### `Checkpoint not found: weights/model.pt`
 
 Download the TherA weights and make sure `model.pt` is located at:
 
 ```text
-weights/checkpoint/model.pt
+weights/model.pt
 ```
 
 ---
@@ -461,9 +452,15 @@ Use reference-cache mode if you do not need runtime LLaVA extraction:
 --reference-cache weights/reference_caches/SUNNY.pt
 ```
 
-For on-the-fly mode, make sure the LLaVA base model and optional LoRA weights are correctly placed under `weights/llava/`.
+For on-the-fly mode, make sure the LLaVA base model and TherA weights are correctly loaded`.
 
 ---
+
+## TODOs
+- [x] inference code and R2T2 dataset
+- [] Upload cache extraction code
+- [] Improve text-guidance 
+
 
 ## Citation
 
@@ -502,3 +499,9 @@ TherA builds on open-source components from the vision-language and diffusion co
 See `LICENSE` for details.
 
 Third-party models, datasets, and libraries retain their own licenses. Please review the licenses for LLaVA, Stable Diffusion, Hugging Face model files, and any external datasets before use.
+
+## Contact
+If you have any questions, contact here please
+```
+donkeymouse@snu.ac.kr
+```
