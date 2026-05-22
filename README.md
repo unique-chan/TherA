@@ -36,7 +36,7 @@
 ## News
 
 - **2026-04-03**: TherA github repo opening
-- **2026-04-03**: TherA inference code and R2T2 dataset release.
+- **2026-05-22**: TherA inference code and R2T2 dataset release.
 
 ---
 
