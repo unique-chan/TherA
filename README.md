@@ -190,14 +190,9 @@ LLaVA is only required for **on-the-fly feature extraction** or **two-image guid
 
 ```bash
 huggingface-cli download llava-hf/llava-1.5-7b-hf \
-  --local-dir weights/llava/llava-1.5-7b-hf
+  --local-dir weights/llava-1.5-7b-hf
 ```
 
-If using a TherA/LLaVA LoRA checkpoint, place it here:
-
-```text
-weights/llava/llava-miragehd-lora/
-```
 
 ---
 
