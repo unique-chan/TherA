@@ -59,10 +59,20 @@ TherA does **not** condition directly on raw text during diffusion inference. In
 1. loaded from a precomputed `.pt` reference cache, or
 2. extracted on the fly using LLaVA.
 
-For practical inference, we recommend **reference-cache mode**. This mode uses precomputed LLaVA features such as `SUNNY.pt`, `CLOUDY.pt`, `RAINY.pt`, or `NIGHT.pt`, and therefore does **not** require loading LLaVA weights at runtime.
+
+
+For resource limited environments, we recommend **reference-cache mode**. This mode uses precomputed LLaVA features such as `SUNNY.pt`, `CLOUDY.pt`, `RAINY.pt`, or `NIGHT.pt`, and therefore does **not** require loading LLaVA weights at runtime. An alternative would be to compute pre-computed LLaVA feature first followed by inferencing with reference-cache mode (upcoming feature). 
 
 ---
+## Demo Video
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=X60UxjGKQkg">
+    <img src="https://img.youtube.com/vi/X60UxjGKQkg/0.jpg" alt="TherA demo video" width="720">
+  </a>
+</div>
+
+---
 ## Repository Layout
 
 ```text
