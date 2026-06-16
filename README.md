@@ -79,8 +79,7 @@ For resource limited environments, we recommend **reference-cache mode**. This m
 TherA/
 ├── infer_custom.py             # Batch RGB → TIR inference on a folder
 ├── infer_example_guided.py     # Single-image / example-guided inference
-├── scripts/
-│   └── infer_palette.sh        # Run multiple weather/style palettes
+├── infer_palette.sh        # Run multiple weather/style palettes
 ├── lavi_ip2p/                  # UNet 8-channel + adapter wrapper
 ├── LaVi-Bridge/modules/        # TextAdapter architecture
 ├── llava/                      # LLaVA code, only needed for on-the-fly mode
