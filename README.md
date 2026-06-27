@@ -1,6 +1,6 @@
 - 데이터셋 다운로드 후, 압축해제 일괄 코드
 ~~~shell
-cd ~/datasets/MIRAGE_HD
+cd ~/datasets
 
 find . -type f -name "*.zip" -print0 | while IFS= read -r -d '' f; do
   unzip "$f" -d "${f%.zip}" && rm "$f"
