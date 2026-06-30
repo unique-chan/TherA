@@ -31,8 +31,8 @@ hf download liuhaotian/llava-v1.5-7b --local_dir weights/llava-v1.5-7b --local-d
 ~~~
 
 - 뉴스
-* requirements.txt 업데이트 (쿠다 12버전도 호환되게)
-* infer_example_guided.py - gpu 분할 모델 작업 지원 
+  * requirements.txt 업데이트 (쿠다 12버전도 호환되게)
+  * infer_example_guided.py - gpu 분할 모델 작업 지원 
 
 
 
