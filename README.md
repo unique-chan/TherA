@@ -10,8 +10,12 @@ done
 
 - 가상환경 만들기 (콘다)
 ~~~shell
-conda create -n thera python=3.10
+cd TherA
 
+conda create -n thera python=3.10
+conda activate thera
+pip install --upgrade pip
+pip install -r requirements.txt
 ~~~
 
 
