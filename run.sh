@@ -1,4 +1,4 @@
-# Text-guided image translation mode
+# Text-guided image translation mode (llava on-the-fly)
 python infer_custom.py \
     --rgb-dir example \
     --output-dir preds_new \
@@ -9,7 +9,14 @@ python infer_custom.py \
     --llava-device cuda:1
 
 
-# Reference-guided image translation mode
+# Text-guided image translation mode (llava off-the-fly)
+python infer_custom.py \
+    --rgb-dir example \
+    --output-dir preds_sunny \
+    --reference-cache ????? \
+
+
+# Reference-guided image translation mode (llava on-the-fly)
 python infer_example_guided.py \
   --mode two-image \
   --reference-image example/fig1.jpg \
