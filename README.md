@@ -19,6 +19,13 @@ pip install -r requirements.txt
 ~~~
 
 
+- 허깅페이스 -> 라바
+~~~shell
+cd TherA
+
+hf download llava-hf/llava-1.5-7b-hf --local-dir weights/llava-1.5-7b-hf
+~~~
+
 
 
 
