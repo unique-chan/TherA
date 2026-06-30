@@ -113,7 +113,9 @@ def parse_args():
     
     # Device
     parser.add_argument("--device", type=str, default="cuda", help="Device (cuda/cpu)")
-    
+    parser.add_argument("--llava-device", type=str, default=None,
+                       help="Device for LLaVA extractor (e.g. cuda:1) (default: same as --device)")
+
     return parser.parse_args()
 
 
@@ -125,6 +127,11 @@ def load_models(args):
     
     device = torch.device(args.device)
     
+    # Yechan -> 
+    llava_device = args.llava_device or args.device
+    # torch.device(args.llava_device or args.device)
+
+
     # Determine if we need LLaVA extractor
     use_cache = args.reference_cache is not None or args.cache_dir is not None
     
@@ -201,7 +208,12 @@ def load_models(args):
         llava_extractor = create_frozen_llava_extractor(
             llava_base_path=args.llava_base_path,
             llava_lora_path=args.llava_lora_path,
-            device=args.device,
+            # device=args.device,
+
+            # Yechan ->
+            device=llava_device,
+            
+
             load_8bit=False,
             load_4bit=False,
             merge_lora=True,
@@ -305,6 +317,15 @@ def translate_image(
 ):
     """Translate RGB to TIR using LLaVA features + conditional generation with CFG"""
     
+    # Yechan ->
+    diffusion_device = next(vae.parameters()).device
+    diffusion_dtype = next(vae.parameters()).dtype
+    device = diffusion_device
+    rgb_tensor = rgb_tensor.to(device=diffusion_device, dtype=diffusion_dtype)
+    if llava_hidden is not None:
+        llava_hidden = llava_hidden.to(diffusion_device)
+
+
     # Encode RGB
     rgb_latents = vae.encode(rgb_tensor).latent_dist.mode() * vae.config.scaling_factor
     
