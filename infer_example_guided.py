@@ -97,6 +97,10 @@ def parse_args():
                        default="How would this RGB scene appear in long-wave thermal infrared spectrum",
                        help="Prompt for LLaVA feature extraction")
     
+    # Yechan ->
+    parser.add_argument("--llava-device", type=str, default=None,
+                       help="Device for LLaVA model, e.g. cuda:1 (default: same as --device)")
+
     # Sampling parameters
     parser.add_argument("--num-steps", type=int, default=100, help="DDIM sampling steps")
     parser.add_argument("--cfg-text", type=float, default=3.5, help="CFG scale for text")
@@ -148,6 +152,9 @@ def load_models(args, need_llava=False):
     print("="*80)
     
     device = torch.device(args.device)
+    # YECHAN ->
+    llava_device = args.llava_device or args.device
+
     checkpoint_dir = Path(args.checkpoint)
     
     # 1. Load VAE
@@ -222,7 +229,11 @@ def load_models(args, need_llava=False):
         llava_extractor = create_frozen_llava_extractor(
             llava_base_path=args.llava_base_path,
             llava_lora_path=args.llava_lora_path,
-            device=args.device,
+
+            # YECHAN ->
+            # device=args.device,
+            device = llava_device,
+
             load_8bit=False,
             load_4bit=False,
             merge_lora=True,
@@ -287,6 +298,20 @@ def translate_image(vae, unet, adapter, scheduler, rgb_tensor, llava_hidden,
                    num_steps=100, cfg_text=3.5, cfg_image=1.5, device="cuda"):
     """Translate RGB to TIR using LLaVA features + conditional generation with CFG"""
     
+    # Yechan ->
+    diffusion_device = next(vae.parameters()).device
+    diffusion_dtype = next(vae.parameters()).dtype
+
+    device = diffusion_device  # Ensure all tensors are on the same device !!!
+
+    rgb_tensor = rgb_tensor.to(device=diffusion_device, dtype=diffusion_dtype)
+
+    if llava_hidden is not None:
+        llava_hidden = llava_hidden.to(diffusion_device)
+
+
+
+
     # Encode RGB
     rgb_latents = vae.encode(rgb_tensor).latent_dist.mode() * vae.config.scaling_factor
     batch_size = rgb_latents.shape[0]
@@ -383,12 +408,22 @@ def main():
     print("\n" + "-"*80)
     if args.mode == "two-image":
         print(f"Extracting features from reference image: {args.reference_image}")
+
+        # Yechan ->
+        # ref_tensor, ref_pil = load_and_prepare_image(
+        #     args.reference_image,
+        #     target_size=args.target_size,
+        #     device=device
+        # )
+        # llava_hidden = llava_extractor.extract_hidden_states([ref_pil], [args.llava_prompt])
         ref_tensor, ref_pil = load_and_prepare_image(
             args.reference_image,
             target_size=args.target_size,
-            device=device
+            device=None  # Load on CPU 
         )
         llava_hidden = llava_extractor.extract_hidden_states([ref_pil], [args.llava_prompt])
+        llava_hidden = llava_hidden.to(device=device)
+
         print(f"✓ Extracted hidden states: {llava_hidden.shape}")
     else:
         print(f"Loading cached reference: {args.reference_cache}")
@@ -403,6 +438,7 @@ def main():
         target_size=args.target_size,
         device=device
     )
+
     print(f"✓ Input image loaded: {input_tensor.shape}")
     
     # Translate
