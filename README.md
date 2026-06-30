@@ -23,9 +23,16 @@ pip install -r requirements.txt
 ~~~shell
 cd TherA
 
-hf download llava-hf/llava-1.5-7b-hf --local-dir weights/llava-1.5-7b-hf
+# hf download llava-hf/llava-1.5-7b-hf --local-dir weights/llava-1.5-7b-hf
+# 위에 껄로 다운하면, 허깅페이스 네이티브 라바 포맷 인데, 이 코드는 구형 (llava_lamma, mm_vision_tower 구조) 기반이므로... 이렇게 하면 안됨. (README.md를 나중에 써서 저자가 실수한 듯...)
+
+hf download liuhaotian/llava-v1.5-7b --local_dir weights/llava-v1.5-7b --local-dir-use-symlinks False
+
 ~~~
 
+- 뉴스
+* requirements.txt 업데이트 (쿠다 12버전도 호환되게)
+* infer_example_guided.py - gpu 분할 모델 작업 지원 
 
 
 
