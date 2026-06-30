@@ -8,9 +8,11 @@ done
 ~~~
 
 
+- 가상환경 만들기 (콘다)
+~~~shell
+conda create -n thera python=3.10
 
-
-
+~~~
 
 
 
